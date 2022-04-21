@@ -1,0 +1,271 @@
+openapi: 3.0.1
+info:
+  title: System API Productos
+  version: '1.1_20220421'
+  description: Mi primer especificación de API usando Open API.
+  contact:
+    email: humberto.cervantes@finvivir.com.mx
+    name: Humberto Cervantes Maceda
+#security:
+#  - BearerAuth: []
+paths:
+  /v1/tiposProducto:
+    get:
+      summary: Permite recuperar la lista de tipos de producto
+      description: Regresa un objecto que contiene el catálogo de tipos de productos (poner todos los detalles necesarios)
+      # Nombre del método que implementa el API en código
+      operationId: getProductTypes
+      responses:
+        '200':
+          description: Consulta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tiposProductoDto'
+        '500':
+          description: Error interno durante la consulta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+        - tiposProducto
+  /v1/productos:
+    post:
+      summary: Permite dar de alta un producto
+      description: >-
+        Permite dar de alta un producto, se valida que dicho producto no haya sido dado de alta previamente con el mismo nombre (SS-215)
+      operationId: createProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/productoDto'
+            examples:
+              default:
+                value: |-
+                  {
+                     "nombre": "Lego",
+                      "tipoProducto": "Juguete"
+                  }
+      responses:
+        '201':
+          description: Creación exitosa
+          headers:
+            Location:
+              description: Url del producto recien creado ej. /v1/productos/1234
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/productoDto'
+        '400':
+          description: No se pudo crear el producto exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+        '500':
+          description: Error interno durante la consulta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+        - productos
+    get:
+      summary: Permite recuperar productos con o sin filtro por tipo
+      operationId: getAllProducts
+      parameters:
+        - name: tipoProducto
+          in: query
+          description: filtro por tipo de producto
+          required: false
+          schema:
+            type: string
+          example: Juguete
+      responses:
+        '200':
+          description: Se recuperaron exitosamente la lista de productos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listaProductosDto'
+        '400':
+          description: El parámetro es inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+        '500':
+          description: Error interno durante la consulta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+        - productos
+  /v1/productos/{productoId}:
+    get:
+      summary: Permite recuperar un producto a partir de su id
+      parameters:
+        - $ref: '#/components/parameters/productoId'
+      operationId: getProduct
+      responses:
+        '200':
+          description: Se recuperó exitosamente el producto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/productoDto'
+        '404':
+          description: El recurso no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+      - productos
+    patch:
+      summary: Permite actualizar un producto a partir de su id
+      description: >-
+        Se debe enviar un objeto JSON con las propiedades a actualizar (excepto id)
+      parameters:
+        - $ref: '#/components/parameters/productoId'
+      operationId: updateProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/productoDto'
+            examples:
+              default:
+                value: |-
+                  {
+                     "nombre": "Lego"
+                  }
+      responses:
+        '200':
+          description: Se actualizó exitosamente el producto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/productoDto'
+        '400':
+          description: >-
+            No se pudo actualizar exitosamente (propiedades no existentes o
+            envío de id en el cuerpo)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+        '404':
+          description: El recurso no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+        - productos
+    delete:
+      summary: Permite borrar un producto a partir de su id
+      operationId: deleteProduct
+      parameters:
+        - $ref: '#/components/parameters/productoId'
+      responses:
+        '204':
+          description: Se borró exitosamente el producto
+        '404':
+          description: El recurso no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorDto'
+      tags:
+        - productos
+components:
+  parameters:
+    productoId:
+      name: productoId
+      in: path
+      description: el identificador del producto generado durante la invocación a POST
+      required: true
+      schema:
+        type: string
+        example: 1234
+  schemas:
+    tiposProductoDto:
+      type: object
+      properties:
+        tiposProducto:
+          type: array
+          items:
+            type: string
+      example: |-
+        {
+           "tiposProducto": [
+              "Juguete","Electrónico","Alimento"
+              ]
+        }
+    productoDto:
+      required:
+        - nombre
+      type: object
+      properties:
+        id:
+          type: string
+          description: el identificador del producto
+          example: 1234
+        nombre:
+          type: string
+          description: el nombre del producto
+          example: Transformers
+        tipoProducto:
+          type: string
+          description: el tipo del producto
+          example: Juguete
+    listaProductosDto:
+      type: object
+      properties:
+        productos:
+          type: array
+          items:
+            $ref: '#/components/schemas/productoDto'
+    errorDto:
+      required:
+        - mensaje
+        - status
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: Estampa de tiempo del error (UTC)
+          example: '2017-01-13T17:09:42.411'
+        status:
+          maximum: 599
+          minimum: 100
+          type: integer
+          description: Código HTTP del error
+          format: int32
+          example: 500
+        error:
+          type: string
+          description: Mensaje enviado por el backend
+          example: RuntimeException
+        mensaje:
+          type: string
+          description: Mensaje del error
+          example: Se produjo un error al acceder a la BD
+      description: Respuesta en caso de error
+#  securitySchemes:
+#    BearerAuth:
+#      type: http
+#      scheme: bearer
+servers:
+  - url: https://products-system.mocklab.io/
+    variables: {}
+    description: Mock server
+  - url: http://localhost:8080/
+    variables: {}
+    description: Dev server
