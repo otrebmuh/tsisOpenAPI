@@ -65,7 +65,10 @@ public class V1ApiController implements V1Api {
             	ProductoDto dto = productoService.create(body);
             	
                 //return new ResponseEntity<ProductoDto>(dto).status(HttpStatus.CREATED);
-            	return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+            	return ResponseEntity
+            			.status(HttpStatus.CREATED)
+            			.header("Location", "/v1/productos/"+dto.getId())
+            			.body(dto);
             } catch (Exception e) {
                 log.error("Couldn't serialize response for content type application/json", e);
                 return new ResponseEntity<ProductoDto>(HttpStatus.INTERNAL_SERVER_ERROR);

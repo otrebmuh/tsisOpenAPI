@@ -19,7 +19,7 @@ public class ProductoService {
 		
 		Producto p = Producto.builder()
 				.nombre(productoDto.getNombre())
-				.tipoProducto(productoDto.getId())
+				.tipoProducto(productoDto.getTipoProducto())
 				.build();
 		
 		// Validar reglas de negocio
